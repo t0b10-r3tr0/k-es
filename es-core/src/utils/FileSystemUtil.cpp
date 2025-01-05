@@ -1268,6 +1268,33 @@ namespace Utils
 			fclose(file);
 		}
 
+		bool appendLineToFile(const std::string& filePath, const std::string& lineContent)
+		{
+			try
+			{
+				// Open the file in append mode, create if it doesn't exist
+				std::ofstream file(filePath, std::ios::app);
+				
+				// Check if the file is open
+				if (!file.is_open())
+				{
+					return false;
+				}
+
+				// Write the line and ensure a newline character
+				file << lineContent << '\n';
+
+				// Close the file explicitly (optional since ofstream will close on destruction)
+				file.close();
+
+				return true;
+			}
+			catch (const std::exception& e)
+			{
+				return false;
+			}
+		}
+
 		bool renameFile(const std::string src, const std::string dst, bool overWrite)
 		{
 			std::string path = getGenericPath(src);

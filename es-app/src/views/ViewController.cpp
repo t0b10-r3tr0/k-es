@@ -32,6 +32,8 @@
 #include "VolumeControl.h"
 
 ViewController* ViewController::sInstance = nullptr;
+const std::string _log = "/userdata/system/qrm_log.txt";
+const bool _quickResumeMode = true;
 
 ViewController* ViewController::get()
 {
@@ -1298,6 +1300,7 @@ void ViewController::onThemeChanged(const std::shared_ptr<ThemeData>& theme)
 
 void ViewController::onShow()
 {
+	Utils::FileSystem::appendLineToFile(_log, "\nViewController::onShow() executing...\n");
 	if (mCurrentView)
 		mCurrentView->onShow();
 }

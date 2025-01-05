@@ -30,6 +30,10 @@
 #include <SDL_syswm.h>
 #endif
 
+const std::string _log = "/userdata/system/qrm_log.txt";
+const bool _quickResumeMode = true;
+
+
 Window::Window() : mNormalizeNextUpdate(false), mFrameTimeElapsed(0), mFrameCountElapsed(0), mAverageDeltaTime(10),
   mAllowSleep(true), mSleeping(false), mTimeSinceLastInput(0), mScreenSaver(NULL), mRenderScreenSaver(false), mClockElapsed(0), mMouseCapture(nullptr), mMenuBackgroundShaderTextureCache(-1)
 {			
@@ -171,6 +175,19 @@ bool Window::init(bool initRenderer, bool initInputManager)
 
 void Window::reactivateGui()
 {
+	Utils::FileSystem::appendLineToFile(_log, "\rteactivateGui executing...\n");
+
+	// if (_quickResumeMode == true)
+	// {
+	// 	Utils::FileSystem::appendLineToFile(_log, "\nQuick Resume enabled...\n");
+
+	// 	// Utils::FileSystem::appendLineToFile(_logDirectory + _logFile, "Quick Resume Mode on. Setting batocera.conf");
+	// 	SystemConf::getInstance()->set("global.bootgame.cmd", "");
+	// 	SystemConf::getInstance()->set("global.bootgame.path", "");
+	// 	SystemConf::getInstance()->saveSystemConf();
+	// 	Utils::FileSystem::appendLineToFile(_log, "Cleared 'batocera.conf'...\n");
+	// }
+
 	for (auto extra : mScreenExtras)
 		extra->onShow();
 

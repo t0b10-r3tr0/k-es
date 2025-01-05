@@ -1844,6 +1844,7 @@ std::string SystemData::getDefaultCore(const std::string emulatorName)
 
 std::string SystemData::getLaunchCommand(const std::string emulatorName, const std::string coreName)
 {
+	Utils::FileSystem::appendLineToFile("/userdata/system/qrm_log.txt", "SystemData::getLaunchCommand() executing");
 	for (auto emulator : mEmulators)
 	{
 		if (emulator.name == emulatorName)

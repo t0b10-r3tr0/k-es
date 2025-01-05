@@ -70,6 +70,7 @@ namespace Utils
 		bool		copyFile(const std::string src, const std::string dst);
 		void		deleteDirectoryFiles(const std::string path, bool deleteDirectory = false);
 		bool		renameFile(const std::string src, const std::string dst, bool overWrite = true);
+		bool 		appendLineToFile(const std::string& filePath, const std::string& lineContent);
 
 		std::string megaBytesToString(unsigned long size);
 		std::string kiloBytesToString(unsigned long size);

@@ -29,6 +29,9 @@
 #include "guis/GuiRetroAchievements.h"
 #include "components/CarouselComponent.h"
 
+const std::string _log = "/userdata/system/qrm_log.txt";
+const bool _quickResumeMode = true;
+
 SystemView::SystemView(Window* window) : GuiComponent(window),
 	mViewNeedsReload(true),
 	mSystemInfo(window, _("SYSTEM INFO"), Font::get(FONT_SIZE_SMALL), 0x33333300, ALIGN_CENTER), mYButton("y")
@@ -1456,6 +1459,20 @@ void SystemView::getCarouselFromTheme(const ThemeData::ThemeElement* elem)
 
 void SystemView::onShow()
 {
+	Utils::FileSystem::appendLineToFile(_log, "\nSystemView::onShow() executing...\n");
+
+	// if (_quickResumeMode == true)
+	// {
+	// 	Utils::FileSystem::appendLineToFile(_log, "\nQuick Resume enabled...\n");
+
+	// 	Utils::FileSystem::appendLineToFile(_logDirectory + _logFile, "Quick Resume Mode on. Setting batocera.conf");
+	// 	SystemConf::getInstance()->set("global.bootgame.cmd", "");
+	// 	SystemConf::getInstance()->set("global.bootgame.path", "");
+	// 	// this is the line I want to set a timeout on
+	// 	SystemConf::getInstance()->saveSystemConf();
+	// 	Utils::FileSystem::appendLineToFile(_log, "Cleared 'batocera.conf' from SystemView::onShow() ...\n");
+	// }
+
 	GuiComponent::onShow();
 
 	mCarousel.onShow();

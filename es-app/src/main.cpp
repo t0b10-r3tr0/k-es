@@ -434,8 +434,13 @@ void launchStartupGame()
 	{
 		InputManager::getInstance()->init();
 		command = Utils::String::replace(command, "%CONTROLLERSCONFIG%", InputManager::getInstance()->configureEmulators());
-		Utils::Platform::ProcessStartInfo(command).run();		
-	}	
+		
+		// added to indicate if we're quick launching
+		// SystemConf::getInstance()->setBool("global.bootgame.launchedonstartup", true);
+		// SystemConf::getInstance()->saveSystemConf;
+		
+		Utils::Platform::ProcessStartInfo(command).run();
+	}
 }
 
 #include "utils/MathExpr.h"

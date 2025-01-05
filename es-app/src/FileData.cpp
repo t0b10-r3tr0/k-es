@@ -61,6 +61,11 @@ static std::map<std::string, std::function<BindableProperty(FileData*)>> propert
 
 FileData* FileData::mRunningGame = nullptr;
 
+// for debugging purposes
+const std::string _log = "/userdata/system/qrm_log.txt";
+const bool _quickResumeMode = true;
+std::string _logMessage = "";
+
 FileData::FileData(FileType type, const std::string& path, SystemData* system)
 	: mPath(path), mType(type), mSystem(system), mParent(nullptr), mDisplayName(nullptr), mMetadata(type == GAME ? GAME_METADATA : FOLDER_METADATA) // metadata is REALLY set in the constructor!
 {
@@ -569,6 +574,15 @@ std::string FileData::getlaunchCommand(LaunchGameOptions& options, bool includeC
 	command = Utils::String::replace(command, "%HOME%", Paths::getHomePath());
 	command = Utils::String::replace(command, "%GAMENAME%", formatCommandLineArgument(gameToUpdate->getName()));
 	command = Utils::String::replace(command, "%SYSTEMNAME%", formatCommandLineArgument(system->getFullName()));
+	command = Utils::String::replace(command, "%ROM%", rom);
+	command = Utils::String::replace(command, "%BASENAME%", basename);
+	command = Utils::String::replace(command, "%ROM_RAW%", rom_raw);
+	command = Utils::String::replace(command, "%EMULATOR%", emulator);
+	command = Utils::String::replace(command, "%CORE%", core);
+	command = Utils::String::replace(command, "%HOME%", Paths::getHomePath());
+	command = Utils::String::replace(command, "%GAMENAME%", formatCommandLineArgument(gameToUpdate->getName()));
+	command = Utils::String::replace(command, "%SYSTEMNAME%", formatCommandLineArgument(system->getFullName()));
+
 
 	// Export Game info XML is requested
 #ifdef WIN32
@@ -584,7 +598,7 @@ std::string FileData::getlaunchCommand(LaunchGameOptions& options, bool includeC
 		command = Utils::String::replace(command, "%GAMEINFOXML%", "");
 		Utils::FileSystem::removeFile(fileInfo);
 	}
-	
+
 	if (includeControllers)
 		command = Utils::String::replace(command, "%CONTROLLERSCONFIG%", controllersConfig);
 
@@ -637,7 +651,7 @@ std::string FileData::getlaunchCommand(LaunchGameOptions& options, bool includeC
 				options.saveStateInfo = SaveStateRepository::getEmptySaveState();
 		}
 
-		command = options.saveStateInfo->setupSaveState(this, command);		
+		command = options.saveStateInfo->setupSaveState(this, command);
 	}
 
 	return command;
@@ -680,13 +694,6 @@ std::string FileData::getMessageFromExitCode(int exitCode)
 	return _("UKNOWN ERROR") + " : " + std::to_string(exitCode);
 }
 
-bool FileData::setQuickResumeCommand(std::string quickResumeCommand)
-{
-			SystemConf::getInstance()->set("global.bootgame.path", getFullPath());
-			SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
-			return SystemConf::getInstance()->saveSystemConf();
-}
-
 bool FileData::launchGame(Window* window, LaunchGameOptions options)
 {
 	LOG(LogInfo) << "Attempting to launch game...";
@@ -703,15 +710,9 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	if (command.empty())
 		return false;
 
-	if (SystemConf::getInstance()->getBool("global.quickresumemode") == true)
-	{
-		std::string quickResumeCommand = getlaunchCommand(false);
-		if (!quickResumeCommand.empty())
-			if (!setQuickResumeCommand(quickResumeCommand))
-				LOG(LogWarning) << "...quick resume command was not saved in batocera.conf!";
-		else
-			LOG(LogWarning) << "...quick resume command was empty!";
-	}
+	std::string quickResumeCommand = getlaunchCommand(false);
+	if (quickResumeCommand.empty())
+		return false;
 
 	AudioManager::getInstance()->deinit();
 	VolumeControl::getInstance()->deinit();
@@ -721,6 +722,16 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 	
 	const std::string rom = Utils::FileSystem::getEscapedPath(getPath());
 	const std::string basename = Utils::FileSystem::getStem(getPath());
+
+	if (SystemConf::getInstance()->getBool("global.quickresumemode") == true)
+	{
+		SystemConf::getInstance()->set("global.bootgame.path", getFullPath());
+		SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
+		SystemConf::getInstance()->saveSystemConf();
+		Utils::FileSystem::appendLineToFile(_log, "\nWrote bootgame settings to batocera.conf...\n");
+	}
+
+	Utils::FileSystem::appendLineToFile(_log, "game-start script fire event executing...\n");
 
 	Scripting::fireEvent("game-start", rom, basename, getName());
 
@@ -753,7 +764,11 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 		Utils::FileSystem::removeFile(p2kConv);
 
 	Scripting::fireEvent("game-end");
+
+	Utils::FileSystem::appendLineToFile(_log, "game-end script fire event executed...\n");
 	
+	Utils::FileSystem::writeAllText(_log, _logMessage);
+
 	if (!hideWindow && Settings::getInstance()->getBool("HideWindowFullReinit"))
 	{
 		ResourceManager::getInstance()->reloadAll();
@@ -789,6 +804,10 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 		saveToGamelistRecovery(gameToUpdate);
 	}
 
+	Utils::FileSystem::appendLineToFile(_log, "About to reactivate GUI...\n");
+	
+	Utils::FileSystem::writeAllText(_log, _logMessage);
+
 	window->reactivateGui();
 
 	if (system != nullptr && system->getTheme() != nullptr)
@@ -798,6 +817,8 @@ bool FileData::launchGame(Window* window, LaunchGameOptions options)
 
 	if (exitCode >= 200 && exitCode <= 300)
 		window->pushGui(new GuiMsgBox(window, _("AN ERROR OCCURRED") + ":\r\n" + getMessageFromExitCode(exitCode), _("OK"), nullptr, GuiMsgBoxIcon::ICON_ERROR));
+
+	Utils::FileSystem::appendLineToFile(_log, "Exiting...\n");
 
 	return exitCode == 0;
 }
